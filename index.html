@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>Phoenix Business Advisory | Webinar Verification</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- SheetJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- QR Scanner -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="header">
+
+<h1>Phoenix Business Advisory</h1>
+
+<p>Webinar QR Verification System</p>
+
+</div>
+
+<div class="uploadCard">
+
+<h2>Step 1</h2>
+
+<p>Select Zoho Exported Excel File</p>
+
+<input
+type="file"
+id="excelFile"
+accept=".xlsx,.xls,.csv">
+
+<button id="loadExcel">
+
+Load Registrations
+
+</button>
+
+</div>
+
+<div class="scannerCard">
+
+<h2>Step 2</h2>
+
+<button id="startScanner">
+
+Start QR Scanner
+
+</button>
+
+<div id="reader"></div>
+
+</div>
+
+<div class="resultCard" id="resultCard">
+
+<h2>Status</h2>
+
+<div id="statusBox">
+
+Waiting for Scan...
+
+</div>
+
+</div>
+
+<div class="stats">
+
+<div class="stat">
+
+<span id="registeredCount">
+
+0
+
+</span>
+
+<p>Verified</p>
+
+</div>
+
+<div class="stat">
+
+<span id="duplicateCount">
+
+0
+
+</span>
+
+<p>Duplicate</p>
+
+</div>
+
+<div class="stat">
+
+<span id="failedCount">
+
+0
+
+</span>
+
+<p>Rejected</p>
+
+</div>
+
+</div>
+
+<button
+id="downloadAttendance">
+
+Download Attendance
+
+</button>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+
+</html>
