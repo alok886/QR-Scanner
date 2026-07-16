@@ -1,0 +1,343 @@
+/* ==========================================
+   PHOENIX BUSINESS ADVISORY
+   Webinar QR Verification
+========================================== */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+
+    background:#f3f5f8;
+
+    min-height:100vh;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:flex-start;
+
+    padding:40px;
+
+}
+
+.container{
+
+    width:100%;
+
+    max-width:900px;
+
+}
+
+.header{
+
+    background:linear-gradient(135deg,#9c0000,#d40000);
+
+    color:white;
+
+    padding:30px;
+
+    border-radius:15px;
+
+    text-align:center;
+
+    box-shadow:0 15px 35px rgba(0,0,0,.15);
+
+    margin-bottom:25px;
+
+}
+
+.header h1{
+
+    font-size:34px;
+
+    margin-bottom:8px;
+
+}
+
+.header p{
+
+    opacity:.9;
+
+    font-size:18px;
+
+}
+
+.uploadCard,
+.scannerCard,
+.resultCard{
+
+    background:white;
+
+    border-radius:15px;
+
+    padding:25px;
+
+    margin-bottom:20px;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+
+}
+
+.uploadCard h2,
+.scannerCard h2,
+.resultCard h2{
+
+    color:#b10000;
+
+    margin-bottom:12px;
+
+}
+
+.uploadCard p{
+
+    margin-bottom:20px;
+
+    color:#555;
+
+}
+
+input[type=file]{
+
+    width:100%;
+
+    padding:15px;
+
+    border:2px dashed #b10000;
+
+    border-radius:10px;
+
+    background:#fafafa;
+
+    cursor:pointer;
+
+    margin-bottom:18px;
+
+}
+
+button{
+
+    width:100%;
+
+    border:none;
+
+    padding:15px;
+
+    border-radius:10px;
+
+    background:#b10000;
+
+    color:white;
+
+    font-size:16px;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+    font-weight:bold;
+
+}
+
+button:hover{
+
+    background:#8b0000;
+
+}
+
+#reader{
+
+    margin-top:25px;
+
+    border-radius:12px;
+
+    overflow:hidden;
+
+}
+
+#statusBox{
+
+    margin-top:15px;
+
+    padding:25px;
+
+    border-radius:12px;
+
+    background:#ececec;
+
+    text-align:center;
+
+    font-size:22px;
+
+    font-weight:bold;
+
+    color:#333;
+
+    transition:.3s;
+
+}
+
+/* VERIFIED */
+
+.success{
+
+    background:#e8ffe8 !important;
+
+    border:3px solid #2ecc71;
+
+    color:#0d6b30 !important;
+
+}
+
+/* REJECTED */
+
+.failed{
+
+    background:#ffeaea !important;
+
+    border:3px solid #ff4b4b;
+
+    color:#b40000 !important;
+
+}
+
+/* DUPLICATE */
+
+.duplicate{
+
+    background:#fff5d8 !important;
+
+    border:3px solid orange;
+
+    color:#9a6200 !important;
+
+}
+
+/* Attendance Stats */
+
+.stats{
+
+    display:grid;
+
+    grid-template-columns:repeat(3,1fr);
+
+    gap:18px;
+
+    margin-bottom:25px;
+
+}
+
+.stat{
+
+    background:white;
+
+    border-radius:15px;
+
+    padding:20px;
+
+    text-align:center;
+
+    box-shadow:0 10px 20px rgba(0,0,0,.08);
+
+}
+
+.stat span{
+
+    display:block;
+
+    font-size:38px;
+
+    color:#b10000;
+
+    font-weight:bold;
+
+}
+
+.stat p{
+
+    color:#555;
+
+    margin-top:8px;
+
+    font-size:15px;
+
+}
+
+#downloadAttendance{
+
+    background:#2ecc71;
+
+    font-size:17px;
+
+}
+
+#downloadAttendance:hover{
+
+    background:#20b25a;
+
+}
+
+/* Animation */
+
+@keyframes pop{
+
+    0%{
+
+        transform:scale(.8);
+
+        opacity:0;
+
+    }
+
+    100%{
+
+        transform:scale(1);
+
+        opacity:1;
+
+    }
+
+}
+
+.success,
+.failed,
+.duplicate{
+
+    animation:pop .3s ease;
+
+}
+
+/* Mobile */
+
+@media(max-width:768px){
+
+    body{
+
+        padding:15px;
+
+    }
+
+    .header h1{
+
+        font-size:25px;
+
+    }
+
+    .stats{
+
+        grid-template-columns:1fr;
+
+    }
+
+    #statusBox{
+
+        font-size:18px;
+
+    }
+
+}
