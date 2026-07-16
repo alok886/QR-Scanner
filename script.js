@@ -104,9 +104,9 @@ loadBtn.addEventListener("click", () => {
 
 scannerBtn.addEventListener("click", startScanner);
 
-function startScanner(){
+function startScanner() {
 
-    if(!excelLoaded){
+    if (!excelLoaded) {
 
         alert("Please load the Excel file first.");
 
@@ -115,59 +115,105 @@ function startScanner(){
     }
 
     scannerBtn.disabled = true;
-
     scannerBtn.innerHTML = "Starting Camera...";
 
     html5QrCode = new Html5Qrcode("reader");
 
     const config = {
 
-        fps:10,
+        fps: 10,
 
-        qrbox:{
-            width:250,
-            height:250
+        qrbox: {
+            width: 250,
+            height: 250
         },
 
-        aspectRatio:1.0
+        aspectRatio: 1.0
 
     };
 
     Html5Qrcode.getCameras()
 
-    .then(cameras=>{
+    .then(cameras => {
 
-        if(cameras && cameras.length){
-
-            html5QrCode.start(
-
-                cameras[0].id,
-
-                config,
-
-                onScanSuccess,
-
-                onScanFailure
-
-            );
-
-            scannerBtn.innerHTML="Scanner Running";
-
-        }
-
-        else{
+        if (!cameras || cameras.length === 0) {
 
             alert("No Camera Found");
 
+            scannerBtn.disabled = false;
+            scannerBtn.innerHTML = "Start QR Scanner";
+
+            return;
+
         }
+
+        console.log("Available Cameras:", cameras);
+
+        let selectedCamera = null;
+
+        // Prefer Rear / Back Camera
+        selectedCamera = cameras.find(camera => {
+
+            const label = camera.label.toLowerCase();
+
+            return (
+                label.includes("back") ||
+                label.includes("rear") ||
+                label.includes("environment")
+            );
+
+        });
+
+        // If no rear camera detected, use last camera
+        if (!selectedCamera) {
+
+            selectedCamera = cameras[cameras.length - 1];
+
+        }
+
+        html5QrCode.start(
+
+            selectedCamera.id,
+
+            config,
+
+            onScanSuccess,
+
+            onScanFailure
+
+        )
+
+        .then(() => {
+
+            scannerBtn.innerHTML = "Scanner Running";
+
+            console.log("Using Camera:", selectedCamera.label);
+
+        })
+
+        .catch(err => {
+
+            console.error(err);
+
+            alert("Unable to Start Camera");
+
+            scannerBtn.disabled = false;
+
+            scannerBtn.innerHTML = "Start QR Scanner";
+
+        });
 
     })
 
-    .catch(err=>{
+    .catch(err => {
 
-        console.log(err);
+        console.error(err);
 
-        alert("Unable to Start Camera");
+        alert("Unable to Access Camera");
+
+        scannerBtn.disabled = false;
+
+        scannerBtn.innerHTML = "Start QR Scanner";
 
     });
 
