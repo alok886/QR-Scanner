@@ -1,493 +1,327 @@
-// ===========================================
-// PHOENIX BUSINESS ADVISORY
-// Webinar QR Verification
-// Part 1
-// ===========================================
+// Phoenix Business Advisory QR Scanner V2
 
-// Store all registrations
 let registrations = [];
-
-// Store verified attendees
 let attendance = [];
-
-// Prevent duplicate scan
 let scannedBookings = new Set();
 
-// Counters
 let verifiedCount = 0;
 let rejectedCount = 0;
 let duplicateCount = 0;
 
-// Scanner Object
-let html5QrCode;
-
-// Excel Loaded?
+let html5QrCode = null;
 let excelLoaded = false;
+let scanLocked = false;
+let lastScannedCode = "";
+let lastScanTime = 0;
 
-// HTML Elements
 const excelInput = document.getElementById("excelFile");
 const loadBtn = document.getElementById("loadExcel");
 const scannerBtn = document.getElementById("startScanner");
-
 const statusBox = document.getElementById("statusBox");
+const resultCard = document.getElementById("resultCard");
 
-const verifiedCounter =
-document.getElementById("registeredCount");
+const verifiedCounter = document.getElementById("registeredCount");
+const rejectedCounter = document.getElementById("failedCount");
+const duplicateCounter = document.getElementById("duplicateCount");
+const attendanceBtn = document.getElementById("downloadAttendance");
 
-const rejectedCounter =
-document.getElementById("failedCount");
+loadBtn.addEventListener("click", loadExcelFile);
+scannerBtn.addEventListener("click", startScanner);
+attendanceBtn.addEventListener("click", downloadAttendance);
 
-const duplicateCounter =
-document.getElementById("duplicateCount");
-
-const attendanceBtn =
-document.getElementById("downloadAttendance");
-
-
-// ===========================================
-// LOAD EXCEL
-// ===========================================
-
-loadBtn.addEventListener("click", () => {
-
-    if(excelInput.files.length===0){
-
-        alert("Please Select Zoho Excel File");
-
+function loadExcelFile() {
+    if (!excelInput.files.length) {
+        alert("Please select the Zoho Excel file.");
         return;
-
     }
 
     const file = excelInput.files[0];
-
     const reader = new FileReader();
 
-    reader.onload = function(e){
+    reader.onload = function (event) {
+        try {
+            const data = new Uint8Array(event.target.result);
+            const workbook = XLSX.read(data, { type: "array" });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
 
-        const data = new Uint8Array(e.target.result);
+            registrations = XLSX.utils.sheet_to_json(firstSheet, {
+                defval: ""
+            });
 
-        const workbook =
-        XLSX.read(data,{type:'array'});
+            excelLoaded = true;
 
-        const sheet =
-        workbook.Sheets[workbook.SheetNames[0]];
-
-        registrations =
-        XLSX.utils.sheet_to_json(sheet);
-
-        excelLoaded=true;
-
-        statusBox.className="success";
-
-        statusBox.innerHTML=
-
-        `
-        ✅ ${registrations.length}
-        registrations loaded successfully.
-        <br><br>
-        Click Start QR Scanner.
-        `;
-
-    }
+            showStatus(
+                "success",
+                `
+                    <div class="scan-badge">FILE LOADED</div>
+                    <h2>REGISTRATIONS READY</h2>
+                    <p><strong>${registrations.length}</strong> registrations loaded successfully.</p>
+                    <p>Start the QR scanner to begin check-in.</p>
+                `,
+                false
+            );
+        } catch (error) {
+            console.error(error);
+            alert("Unable to read the Excel file. Please confirm that it is a valid Excel or CSV file.");
+        }
+    };
 
     reader.readAsArrayBuffer(file);
-
-});
-
-
-// ===========================================
-// PART 2
-// QR Scanner
-// ===========================================
-
-// Start Scanner
-
-scannerBtn.addEventListener("click", startScanner);
+}
 
 function startScanner() {
-
     if (!excelLoaded) {
-
         alert("Please load the Excel file first.");
-
         return;
-
     }
 
     scannerBtn.disabled = true;
-    scannerBtn.innerHTML = "Starting Camera...";
+    scannerBtn.textContent = "Starting Camera...";
 
     html5QrCode = new Html5Qrcode("reader");
 
     const config = {
-
         fps: 10,
-
         qrbox: {
             width: 250,
             height: 250
         },
-
-        aspectRatio: 1.0
-
+        aspectRatio: 1
     };
 
     Html5Qrcode.getCameras()
+        .then(cameras => {
+            if (!cameras || cameras.length === 0) {
+                throw new Error("No camera found.");
+            }
 
-    .then(cameras => {
+            let selectedCamera = cameras.find(camera => {
+                const label = String(camera.label || "").toLowerCase();
 
-        if (!cameras || cameras.length === 0) {
+                return (
+                    label.includes("back") ||
+                    label.includes("rear") ||
+                    label.includes("environment")
+                );
+            });
 
-            alert("No Camera Found");
+            if (!selectedCamera) {
+                selectedCamera = cameras[cameras.length - 1];
+            }
 
-            scannerBtn.disabled = false;
-            scannerBtn.innerHTML = "Start QR Scanner";
-
-            return;
-
-        }
-
-        console.log("Available Cameras:", cameras);
-
-        let selectedCamera = null;
-
-        // Prefer Rear / Back Camera
-        selectedCamera = cameras.find(camera => {
-
-            const label = camera.label.toLowerCase();
-
-            return (
-                label.includes("back") ||
-                label.includes("rear") ||
-                label.includes("environment")
+            return html5QrCode.start(
+                selectedCamera.id,
+                config,
+                onScanSuccess,
+                onScanFailure
             );
-
-        });
-
-        // If no rear camera detected, use last camera
-        if (!selectedCamera) {
-
-            selectedCamera = cameras[cameras.length - 1];
-
-        }
-
-        html5QrCode.start(
-
-            selectedCamera.id,
-
-            config,
-
-            onScanSuccess,
-
-            onScanFailure
-
-        )
-
-        .then(() => {
-
-            scannerBtn.innerHTML = "Scanner Running";
-
-            console.log("Using Camera:", selectedCamera.label);
-
         })
-
-        .catch(err => {
-
-            console.error(err);
-
-            alert("Unable to Start Camera");
-
+        .then(() => {
+            scannerBtn.textContent = "Scanner Running";
+        })
+        .catch(error => {
+            console.error(error);
+            alert("Unable to start or access the camera.");
             scannerBtn.disabled = false;
-
-            scannerBtn.innerHTML = "Start QR Scanner";
-
+            scannerBtn.textContent = "Start QR Scanner";
         });
-
-    })
-
-    .catch(err => {
-
-        console.error(err);
-
-        alert("Unable to Access Camera");
-
-        scannerBtn.disabled = false;
-
-        scannerBtn.innerHTML = "Start QR Scanner";
-
-    });
-
 }
 
+function onScanSuccess(decodedText) {
+    const bookingID = normalize(decodedText);
+    const now = Date.now();
 
-// ===========================================
-// Called Every Time QR is Read
-// ===========================================
-
-function onScanSuccess(decodedText){
-
-    verifyBooking(decodedText.trim());
-
-}
-
-
-// Ignore Camera Errors
-
-function onScanFailure(error){
-
-    // intentionally empty
-
-}
-
-
-
-// ===========================================
-// Search Booking ID
-// ===========================================
-
-function verifyBooking(bookingID){
-
-    let person = registrations.find(row=>{
-
-        return String(row["Booking ID"]).trim() === bookingID;
-
-    });
-
-
-    if(!person){
-
-        rejectedCount++;
-
-        rejectedCounter.innerHTML=rejectedCount;
-
-        statusBox.className="failed";
-
-        statusBox.innerHTML=`
-
-            <h2>❌ NOT REGISTERED</h2>
-
-            <br>
-
-            Booking ID
-
-            <br><br>
-
-            <b>${bookingID}</b>
-
-            <br><br>
-
-            Record Not Found.
-
-        `;
-
+    if (!bookingID || scanLocked) {
         return;
-
     }
 
+    if (bookingID === lastScannedCode && now - lastScanTime < 4000) {
+        return;
+    }
 
-    // Duplicate Check
+    lastScannedCode = bookingID;
+    lastScanTime = now;
+    scanLocked = true;
 
-    if(scannedBookings.has(bookingID)){
+    verifyBooking(bookingID);
 
+    setTimeout(() => {
+        scanLocked = false;
+    }, 1800);
+}
+
+function onScanFailure() {
+    // Normal camera frame errors are ignored.
+}
+
+function verifyBooking(bookingID) {
+    const person = registrations.find(row =>
+        normalize(row["Booking ID"]) === bookingID
+    );
+
+    if (!person) {
+        rejectedCount++;
+        rejectedCounter.textContent = rejectedCount;
+
+        showStatus(
+            "failed",
+            `
+                <div class="scan-badge">SCAN REJECTED</div>
+                <h2>NOT REGISTERED</h2>
+                <p>Booking ID</p>
+                <p class="person-name">${escapeHtml(bookingID)}</p>
+                <p>Record not found in the uploaded Excel file.</p>
+            `
+        );
+        return;
+    }
+
+    if (scannedBookings.has(bookingID)) {
         duplicateCount++;
+        duplicateCounter.textContent = duplicateCount;
 
-        duplicateCounter.innerHTML=duplicateCount;
-
-        statusBox.className="duplicate";
-
-        statusBox.innerHTML=`
-
-        <h2>⚠ Already Checked In</h2>
-
-        <br>
-
-        ${person["Customer"]}
-
-        <br><br>
-
-        Booking ID
-
-        <br>
-
-        ${bookingID}
-
-        `;
-
+        showStatus(
+            "duplicate",
+            `
+                <div class="scan-badge">ALREADY SCANNED</div>
+                <h2>ALREADY CHECKED IN</h2>
+                <p class="person-name">${escapeHtml(person["Customer"])}</p>
+                <p>Booking ID: <strong>${escapeHtml(bookingID)}</strong></p>
+            `
+        );
         return;
-
     }
 
+    const paymentStatus = normalize(person["Payment Status"]).toLowerCase();
 
-    // ===========================================
-    // PAYMENT VERIFICATION
-    // ===========================================
-
-    let paymentStatus = "";
-
-    if(person["Payment Status"] !== undefined &&
-       person["Payment Status"] !== null){
-
-        paymentStatus =
-        String(person["Payment Status"]).trim().toLowerCase();
-
-    }
-
-    // Payment NOT Paid
-
-    if(paymentStatus !== "paid"){
-
+    if (paymentStatus !== "paid") {
         rejectedCount++;
+        rejectedCounter.textContent = rejectedCount;
 
-        rejectedCounter.innerHTML = rejectedCount;
-
-        statusBox.className = "failed";
-
-        statusBox.innerHTML = `
-
-        <h2>🔴 NOT REGISTERED</h2>
-
-        <br>
-
-        <b>${person["Customer"]}</b>
-
-        <br><br>
-
-        Booking ID :
-        ${bookingID}
-
-        <br><br>
-
-        Payment Status :
-        <b>${person["Payment Status"]}</b>
-
-        `;
-
+        showStatus(
+            "failed",
+            `
+                <div class="scan-badge">PAYMENT NOT VERIFIED</div>
+                <h2>NOT CHECKED IN</h2>
+                <p class="person-name">${escapeHtml(person["Customer"])}</p>
+                <p>Booking ID: <strong>${escapeHtml(bookingID)}</strong></p>
+                <p>Payment Status: <strong>${escapeHtml(person["Payment Status"] || "Not Available")}</strong></p>
+            `
+        );
         return;
-
     }
-
-
-    // ===========================================
-    // REGISTERED
-    // ===========================================
 
     scannedBookings.add(bookingID);
 
     attendance.push({
-
-        bookingID: bookingID,
-
-        customer: person["Customer"],
-
-        email: person["Customer Email"],
-
-        phone: person["Customer Contact Number"],
-
-        payment: person["Payment Status"],
-
+        bookingID,
+        customer: normalize(person["Customer"]),
+        email: normalize(person["Customer Email"]),
+        phone: normalize(person["Customer Contact Number"]),
+        payment: normalize(person["Payment Status"]),
         time: new Date().toLocaleString()
-
     });
 
     verifiedCount++;
+    verifiedCounter.textContent = verifiedCount;
 
-    verifiedCounter.innerHTML = verifiedCount;
+    showStatus(
+        "success",
+        `
+            <div class="scan-badge">SCANNED SUCCESSFULLY</div>
+            <h2>CHECKED IN</h2>
+            <p class="person-name">${escapeHtml(person["Customer"])}</p>
 
-    statusBox.className = "success";
+            <div class="result-details">
+                <p><span>Booking ID</span><strong>${escapeHtml(bookingID)}</strong></p>
+                <p><span>Email</span><strong>${escapeHtml(person["Customer Email"])}</strong></p>
+                <p><span>Phone</span><strong>${escapeHtml(person["Customer Contact Number"])}</strong></p>
+                <p><span>Payment</span><strong>${escapeHtml(person["Payment Status"])}</strong></p>
+            </div>
+        `
+    );
+}
 
-    statusBox.innerHTML = `
+function showStatus(className, html, scrollToResult = true) {
+    statusBox.className = className;
+    statusBox.innerHTML = html;
 
-        <h2>✅ REGISTERED</h2>
+    if (scrollToResult) {
+        setTimeout(() => {
+            resultCard.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
 
-        <br>
+            statusBox.classList.remove("result-flash");
+            void statusBox.offsetWidth;
+            statusBox.classList.add("result-flash");
+        }, 100);
+    }
+}
 
-        <b>${person["Customer"]}</b>
+function normalize(value) {
+    return String(value ?? "").trim();
+}
 
-        <br><br>
+function escapeHtml(value) {
+    return normalize(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 
-        Booking ID :
-        ${bookingID}
+function csvCell(value) {
+    return `"${normalize(value).replace(/"/g, '""')}"`;
+}
 
-        <br>
-
-        Email :
-        ${person["Customer Email"]}
-
-        <br>
-
-        Phone :
-        ${person["Customer Contact Number"]}
-
-        <br>
-
-        Payment :
-        <b>${person["Payment Status"]}</b>
-
-    `;
-
-
-
-
-// ===========================================
-// DOWNLOAD ATTENDANCE
-// ===========================================
-
-attendanceBtn.addEventListener("click", downloadAttendance);
-
-function downloadAttendance(){
-
-    if(attendance.length===0){
-
-        alert("No Attendance Available");
-
+function downloadAttendance() {
+    if (!attendance.length) {
+        alert("No checked-in attendance is available.");
         return;
-
     }
 
-    let csv =
+    const rows = [
+        [
+            "Booking ID",
+            "Customer",
+            "Email",
+            "Phone",
+            "Payment Status",
+            "Scan Time"
+        ]
+    ];
 
-"Booking ID,Customer,Email,Phone,Payment Status,Scan Time\n";
-
-    attendance.forEach(person=>{
-
-        csv +=
-
-`${person.bookingID},
-${person.customer},
-${person.email},
-${person.phone},
-${person.payment},
-${person.time}\n`;
-
+    attendance.forEach(person => {
+        rows.push([
+            person.bookingID,
+            person.customer,
+            person.email,
+            person.phone,
+            person.payment,
+            person.time
+        ]);
     });
 
-    const blob = new Blob(
+    const csv = rows
+        .map(row => row.map(csvCell).join(","))
+        .join("\n");
 
-        [csv],
-
-        {
-
-            type:"text/csv"
-
-        }
-
-    );
+    const blob = new Blob(["\uFEFF" + csv], {
+        type: "text/csv;charset=utf-8;"
+    });
 
     const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
 
-    const a = document.createElement("a");
+    link.href = url;
+    link.download = "Phoenix_Kadi_Seminar_Attendance.csv";
 
-    a.href = url;
-
-    a.download = "Attendance.csv";
-
-    document.body.appendChild(a);
-
-    a.click();
-
-    document.body.removeChild(a);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
     URL.revokeObjectURL(url);
-
-}
 }
