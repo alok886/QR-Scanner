@@ -1,132 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Phoenix Business Advisory | Webinar Verification</title>
+    <title>Phoenix Business Advisory | Seminar Verification</title>
 
     <link rel="stylesheet" href="style.css">
 
-    <!-- SheetJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-    <!-- QR Scanner -->
     <script src="https://unpkg.com/html5-qrcode"></script>
-
 </head>
 
 <body>
+    <main class="container">
 
-<div class="container">
+        <header class="header">
+            <img src="assets/phoenix-logo.png" alt="Phoenix Business Advisory" class="brand-logo">
 
-<div class="header">
+            <div>
+                <h1>Kadi Seminar</h1>
+                <p>QR Verification and Attendance System</p>
+            </div>
+        </header>
 
-<h1>Phoenix Business Advisory</h1>
+        <section class="card">
+            <div class="step-label">Step 1</div>
+            <h2>Upload Registration Excel File</h2>
+            <p>Select the latest Zoho exported Excel, XLS, or CSV file.</p>
 
-<p>Webinar QR Verification System</p>
+            <input type="file" id="excelFile" accept=".xlsx,.xls,.csv">
 
-</div>
+            <button id="loadExcel" type="button">
+                Load Registrations
+            </button>
+        </section>
 
-<div class="uploadCard">
+        <section class="card">
+            <div class="step-label">Step 2</div>
+            <h2>Scan Participant QR Code</h2>
 
-<h2>Step 1</h2>
+            <button id="startScanner" type="button">
+                Start QR Scanner
+            </button>
 
-<p>Select Zoho Exported Excel File</p>
+            <div id="reader"></div>
+        </section>
 
-<input
-type="file"
-id="excelFile"
-accept=".xlsx,.xls,.csv">
+        <section class="card result-card" id="resultCard">
+            <div class="step-label">Scan Result</div>
 
-<button id="loadExcel">
+            <div id="statusBox" class="waiting">
+                Waiting for QR scan...
+            </div>
+        </section>
 
-Load Registrations
+        <section class="stats">
+            <article class="stat">
+                <span id="registeredCount">0</span>
+                <p>Checked In</p>
+            </article>
 
-</button>
+            <article class="stat">
+                <span id="duplicateCount">0</span>
+                <p>Duplicate</p>
+            </article>
 
-</div>
+            <article class="stat">
+                <span id="failedCount">0</span>
+                <p>Rejected</p>
+            </article>
+        </section>
 
-<div class="scannerCard">
+        <button id="downloadAttendance" type="button" class="download-button">
+            Download Attendance
+        </button>
 
-<h2>Step 2</h2>
+    </main>
 
-<button id="startScanner">
-
-Start QR Scanner
-
-</button>
-
-<div id="reader"></div>
-
-</div>
-
-<div class="resultCard" id="resultCard">
-
-<h2>Status</h2>
-
-<div id="statusBox">
-
-Waiting for Scan...
-
-</div>
-
-</div>
-
-<div class="stats">
-
-<div class="stat">
-
-<span id="registeredCount">
-
-0
-
-</span>
-
-<p>Verified</p>
-
-</div>
-
-<div class="stat">
-
-<span id="duplicateCount">
-
-0
-
-</span>
-
-<p>Duplicate</p>
-
-</div>
-
-<div class="stat">
-
-<span id="failedCount">
-
-0
-
-</span>
-
-<p>Rejected</p>
-
-</div>
-
-</div>
-
-<button
-id="downloadAttendance">
-
-Download Attendance
-
-</button>
-
-</div>
-
-<script src="script.js"></script>
-
+    <script src="script.js"></script>
 </body>
-
 </html>
